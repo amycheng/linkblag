@@ -1,0 +1,57 @@
+<html>
+<head>
+  <title>linkblag</title>
+</head>
+<body>
+  <div id="content">
+  </div>
+
+  <script id="template" type="x-tmpl-mustache">
+  {{#links}}
+   <section>
+    <h2>{{date}}</h2>
+    {{#links}}
+      <article>
+        <h2><a href="{{url}}">{{title}}</a></h2>
+        {{&notes}}
+      </article>
+    {{/links}}
+    </section>
+  {{/links}}
+  </script>
+
+  <script src="js/mustache.min.js"></script>
+  <script src="js/marked.min.js"></script>
+
+  <script>
+  //DOM
+  var template = document.getElementById("template");
+  var content = document.getElementById("content");
+  //AJAX request to get data.json
+  var fetchData = new XMLHttpRequest();
+
+  fetchData.onreadystatechange = function () {
+    if (fetchData.readyState != 4 || fetchData.status != 200) return;
+    var data = JSON.parse(fetchData.response);
+
+    for (var i = 0; i < data.links.length; i++) {
+      for(var j = 0; j<data.links[i].links.length; j++){
+        //if there are link notes, parse with markdown
+        var linkNote = data.links[i].links[j]["notes"];
+        if (linkNote) {
+          //replace with rendered html (processed by markdown)
+          data.links[i].links[j]["notes"] = marked(linkNote);
+        };
+      }
+    };
+
+    var rendered = Mustache.render(template.innerHTML, data);
+    Mustache.parse(template.innerHTML);
+    content.innerHTML += rendered;
+  };
+  fetchData.open("GET","data.json",true);
+  fetchData.send();
+
+  </script>
+</body>
+</html>
